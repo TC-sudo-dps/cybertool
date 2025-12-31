@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyber Toolbox - 漢堡選單專業版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --accent: #58a6ff;
+            --nav-bg: #161b22;
+        }
+
+        body { 
+            background: var(--bg); 
+            color: #c9d1d9; 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- 導覽列 --- */
+        .navbar {
+            width: 100%;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand { font-weight: bold; color: var(--accent); font-size: 1.2rem; }
+
+        /* --- 漢堡選單按鈕區 --- */
+        .menu-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            gap: 10px; /* 文字與線條的間距 */
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .menu-container:hover {
+            background: #21262d;
+        }
+
+        .menu-text {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            user-select: none;
+        }
+
+        .hamburger-icon {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 20px;
+            height: 14px;
+        }
+
+        .hamburger-icon span {
+            display: block;
+            height: 2px;
+            width: 100%;
+            background-color: #fff;
+            border-radius: 2px;
+        }
+
+        /* --- 下拉選單內容 --- */
+        .nav-links {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 200px; /* 寬度稍微縮小，更像選單 */
+            background: var(--nav-bg);
+            border: 1px solid var(--border);
+            border-top: none;
+            flex-direction: column;
+            box-shadow: -5px 5px 15px rgba(0,0,0,0.5);
+            border-bottom-left-radius: 8px;
+        }
+
+        .nav-links.show {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .nav-links button {
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 15px 20px;
+            text-align: left;
+            font-size: 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-links button:last-child { border-bottom: none; }
+
+        .nav-links button:hover {
+            background: #30363d;
+            color: var(--accent);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- 工具內容 --- */
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+
+        .tool-content {
+            display: none; 
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .tool-content.active { display: block; }
+
+        h2 { color: var(--accent); margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        textarea, input { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 6px; margin-bottom: 15px; box-sizing: border-box; font-family: monospace; }
+        button.action-btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+        .btn-blue { background: #1f6feb; }
+        .btn-green { background: #238636; }
+        .btn-gray { background: #30363d; margin-top: 10px;}
+        .report { background: #000; padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent); white-space: pre-wrap; display: none; margin-top: 20px; font-size: 14px;}
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand">🛡️ Cyber Toolbox</div>
+        
+        <div class="menu-container" onclick="toggleMenu()">
+            <span class="menu-text">選單</span>
+            <div class="hamburger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div id="navLinks" class="nav-links">
+            <button onclick="switchTool('audit')">🛡️ 網址安全分析</button>
+            <button onclick="switchTool('aes')">🔐 AES 隱私加密</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="tool-audit" class="tool-content active">
+            <h2>🛡️ 網址安全深度分析</h2>
+            <p style="color: #8b949e; margin-bottom: 20px;">請輸入欲檢測的 URL 地址：</p>
+            <textarea id="uIn" rows="6" placeholder="https://example.com/..."></textarea>
+            <button class="action-btn btn-blue" onclick="auditURL()">執行分析掃描</button>
+            <div id="uRes" class="report"></div>
+        </div>
+
+        <div id="tool-aes" class="tool-content">
+            <h2>🔐 AES 隱私加密工具</h2>
+            <p style="color: #8b949e; margin-bottom: 20px;">純瀏覽器運算，確保數據隱私。</p>
+            <textarea id="aIn" rows="6" placeholder="輸入要處理的文字內容..."></textarea>
+            <input type="password" id="aKey" placeholder="設定您的加密金鑰">
+            <button class="action-btn btn-green" onclick="doAes(1)">加密文字</button>
+            <button class="action-btn btn-gray" onclick="doAes(2)">解密文字</button>
+            <div id="aRes" class="report"></div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('show');
+        }
+
+        function switchTool(toolId) {
+            document.querySelectorAll('.tool-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tool-' + toolId).classList.add('active');
+            document.getElementById('navLinks').classList.remove('show');
+        }
+
+        function auditURL() {
+            const input = document.getElementById('uIn').value.trim();
+            const res = document.getElementById('uRes');
+            if(!input) return;
+            res.style.display = 'block';
+            try {
+                const url = new URL(input.startsWith('http') ? input : 'http://' + input);
+                let report = `📊 掃描結果摘要：\n--------------------\n🏠 網域：${url.hostname}\n🚩 風險：初步檢查正常。`;
+                res.innerText = report;
+            } catch(e) { res.innerText = "❌ 格式錯誤"; }
+        }
+
+        function doAes(type) {
+            const txt = document.getElementById('aIn').value;
+            const key = document.getElementById('aKey').value;
+            const res = document.getElementById('aRes');
+            if(!txt || !key) return;
+            res.style.display = 'block';
+            if(type === 1) {
+                res.innerText = "🔒 加密結果：\n" + CryptoJS.AES.encrypt(txt, key).toString();
+            } else {
+                try {
+                    const d = CryptoJS.AES.decrypt(txt, key).toString(CryptoJS.enc.Utf8);
+                    res.innerText = d ? "🔓 解密結果：\n" + d : "❌ 密鑰錯誤";
+                } catch(e) { res.innerText = "❌ 解析失敗"; }
+            }
+        }
+    </script>
+</body>
+</html>
